@@ -1,0 +1,27 @@
+#Check global log 
+
+I commit-2-files.inc 
+D DATE1 "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d"
+D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?${DATE1}) [-+](\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ h.txt wug.txt
+> add h.txt
+<<<
+> commit "Add h"
+<<<
+> log 
+${COMMIT_LOG}
+${COMMIT_LOG}
+${COMMIT_LOG}
+<<<*
+D L1 "${1} [-+]${2}"
+D L2 "${3} [-+]${4}"
+D L3 "${5} [-+]${6}"
+> global-log
+${ARBLINES}${L1}?${ARBLINES}
+<<<*
+> global-log
+${ARBLINES}${L2}?${ARBLINES}
+<<<*
+> global-log
+${ARBLINES}${L3}?${ARBLINES}
+<<<*

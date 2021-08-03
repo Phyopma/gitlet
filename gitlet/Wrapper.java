@@ -58,9 +58,15 @@ public class Wrapper {
                 createBlob(b);
                 sa.stageToAdd(n,hashBlob);
             }
+            if (sa.getRemove().contains(n)){
+                sa.getRemove().remove(n);
+            }
         }
+
+
         // not found , add to sa.add
         else{
+
             createBlob(b);
             sa.stageToAdd(n,hashBlob);
         }
@@ -88,16 +94,20 @@ public class Wrapper {
         else if(current.getTracked().containsKey(n)){
             // if found, add to sa.remove
             sa.getRemove().add(n);
+            restrictedDelete(now);
+        }
+        else if(!current.getTracked().containsKey(n)) {
+            sa.getRemove().add(n);
         }
         // if not, error
         else{
             throw error("No reason to remove the file.");
         }
 
-        // delete now from CWD
-        if(now.exists()){
-            restrictedDelete(now);
-        }
+//        // delete now from CWD
+//        if(now.exists()){
+//            restrictedDelete(now);
+//        }
         writeObject(stages,sa);
     }
 
@@ -148,11 +158,11 @@ public class Wrapper {
         List<String> tmp = plainFilenamesIn(commits);
         assert tmp != null;
         for (String s : tmp) {
-            System.out.println("===");
-            System.out.println(s);
-            System.out.println();
+            Commit gg = retrieveCommit(s);
+            logFormat(gg);
 
         }
+
     }
 
     public void find(String arg) {
@@ -272,9 +282,9 @@ public class Wrapper {
                     System.out.println(s);
                 }
             }
-            if (sa.getRemove().contains(s)){
-                System.out.println(s);
-            }
+//            if (sa.getRemove().contains(s)){
+//                System.out.println(s);
+//            }
         }
 
         System.out.println();
@@ -300,7 +310,8 @@ public class Wrapper {
 
         // if hash not found, error
         if (!plainFilenamesIn(commits).contains(hash)){
-            throw error("No commit with that id exists.");
+            message("No commit with that id exists.");
+            System.exit(0);
         }
 
         // retrieve commit form given hash
@@ -314,23 +325,28 @@ public class Wrapper {
         }
         // if not, error
         else{
-            throw error("File does not exist in that commit.");
+            message("File does not exist in that commit.");
+            System.exit(0);
         }
     }
 
     public void checkoutBranch(String branch) throws IOException {
         if (!Objects.requireNonNull(plainFilenamesIn(refs)).contains(branch)){
-            throw error("No such branch exists.");
+            message("No such branch exists.");
+            System.exit(0);
         }
         String curBranch = currentBranch();
         if ( curBranch.equals(branch)){
-            throw error("No need to checkout the current branch.");
+            message("No need to checkout the current branch.");
+            System.exit(0);
+
         }
         Commit curCommit = retrieveCurrentCommit();
         for (String s: Objects.requireNonNull(plainFilenamesIn(CWD))
              ) {
             if (!curCommit.getTracked().containsKey(s)){
-                throw error("There is an untracked file in the way; delete it, or add and commit it first.");
+                message("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
             }
         }
         Commit current = retrieveCurrentCommit();
