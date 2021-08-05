@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static gitlet.Utils.*;
@@ -87,6 +88,7 @@ public class Wrapper {
         if(sa.getAdd().containsKey(n)){
             // if found, remove from sa.add
             sa.getAdd().remove(n);
+
         }
         // if not , error
         // find now in current commit.map
@@ -94,14 +96,15 @@ public class Wrapper {
         else if(current.getTracked().containsKey(n)){
             // if found, add to sa.remove
             sa.getRemove().add(n);
-            restrictedDelete(now);
+            restrictedDelete(n);
         }
         else if(!current.getTracked().containsKey(n)) {
             sa.getRemove().add(n);
         }
         // if not, error
         else{
-            throw error("No reason to remove the file.");
+            message("No reason to remove the file.");
+            System.exit(0);
         }
 
 //        // delete now from CWD
@@ -168,17 +171,18 @@ public class Wrapper {
     public void find(String arg) {
         boolean found = false;
         for (String commitHash :
-                plainFilenamesIn(commits)) {
+                Objects.requireNonNull(plainFilenamesIn(commits))) {
             Commit current = retrieveCommit(commitHash);
             if ( current.getMessage().equals(arg)){
-                System.out.println("===");
+//                System.out.println("===");
                 System.out.println(commitHash);
-                System.out.println();
+//                System.out.println();
                 found = true;
             }
         }
         if(!found){
-            throw error("Found no commit with that message.");
+            message("Found no commit with that message.");
+            System.exit(0);
         }
     }
 
@@ -342,19 +346,21 @@ public class Wrapper {
 
         }
         Commit curCommit = retrieveCurrentCommit();
+        setHead(branch);
+        Commit target = retrieveCurrentCommit();
         for (String s: Objects.requireNonNull(plainFilenamesIn(CWD))
              ) {
             if (!curCommit.getTracked().containsKey(s)){
-                message("There is an untracked file in the way; delete it, or add and commit it first.");
-                System.exit(0);
+                if (target.getTracked().containsKey(s)){
+                    message("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.exit(0);
+                }
             }
         }
-        Commit current = retrieveCurrentCommit();
-        setHead(branch);
+
 
         //retrieve commit from HEAD
-        Commit target = retrieveCurrentCommit();
-        helpCheckout(current,target);
+        helpCheckout(curCommit,target);
 
 
     }
@@ -375,12 +381,14 @@ public class Wrapper {
 
     public void rmBranch(String arg) throws IOException {
         if (!Objects.requireNonNull(plainFilenamesIn(refs)).contains(arg)){
-            throw error("A branch with that name does not exist.");
+            message("A branch with that name does not exist.");
+            System.exit(0);
         }
 
         String currentBranch = currentBranch();
         if (currentBranch.equals(arg)){
-            throw error("Cannot remove the current branch.");
+            message("Cannot remove the current branch.");
+            System.exit(0);
         }
 
         File delete = join(refs,arg);
@@ -390,19 +398,26 @@ public class Wrapper {
 
     public void reset(String arg) throws IOException {
         if (!Objects.requireNonNull(plainFilenamesIn(commits)).contains(arg)){
-            throw error("No commit with that id exists.");
+            message("No commit with that id exists.");
+            System.exit(0);
         }
         Commit curCommit = retrieveCurrentCommit();
+        Commit target = retrieveCommit(arg);
         for (String s :
                 Objects.requireNonNull(plainFilenamesIn(CWD))) {
             if (!curCommit.getTracked().containsKey(s)){
-                throw error("There is an untracked file in the way; delete it, or add and commit it first.");
+                if (target.getTracked().containsKey(s)){
+                    message("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+                else {
+                    rm(s);
+                }
+
             }
         }
 
-        Commit current = retrieveCurrentCommit();
-        Commit target = retrieveCommit(arg);
-        helpCheckout(current,target);
+        helpCheckout(curCommit,target);
         File f = join(refs,currentBranch());
         f.createNewFile();
         writeContents(f,target.getHash());
@@ -413,31 +428,36 @@ public class Wrapper {
         StageArea sa = readObject(stages,StageArea.class);
 
         if (!sa.getRemove().isEmpty() || !sa.getAdd().isEmpty()){
-            throw error("You have uncommitted changes.");
+            message("You have uncommitted changes.");
+            System.exit(0);
         }
         if (!Objects.requireNonNull(plainFilenamesIn(refs)).contains(arg)){
-            throw error("A branch with that name does not exist.");
+            message("A branch with that name does not exist.");
+            System.exit(0);
         }
         if (arg.equals(currentBranch())){
-            throw error("Cannot merge a branch with itself.");
+            message("Cannot merge a branch with itself.");
+            System.exit(0);
         }
         Commit current = retrieveCurrentCommit();
         for (String s :
                 Objects.requireNonNull(plainFilenamesIn(CWD))) {
             if (!current.getTracked().containsKey(s)){
                 if (!sa.getAdd().containsKey(s)){
-                    throw error("There is an untracked file in the way; delete it, or add and commit it first.");
+                    message("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.exit(0);
                 }
             }
             if (sa.getRemove().contains(s)){
-                throw error("There is an untracked file in the way; delete it, or add and commit it first.");
+                message("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
             }
         }
         String givenHash = readContentsAsString(join(refs,arg));
         Commit given = retrieveCommit(givenHash);
-        Commit split = retrieveCommit(current.getParent());
+        Commit split = retrieveCommit(given.getParent());
         while (!split.isSplit()) {
-            System.out.println(split.getParent());
+//            System.out.println(split.getParent());
             split = retrieveCommit(split.getParent());
         }
         if (split.getHash().equals(given.getHash())){
@@ -462,38 +482,58 @@ public class Wrapper {
                 all) {
             if (!Objects.equals(givenTracked.get(s),(currentTracked.get(s)))){
                 if(Objects.equals(splitTracked.get(s),(currentTracked.get(s)))){
-                    if (givenTracked.get(s) == null){
+                    if (Objects.isNull(givenTracked.get(s))){
                         restrictedDelete(join(CWD,s));
                         sa.stageToRemove(s);
-                        continue;
                     }
-                    createNewVersion(givenTracked.get(s),s);
-                    sa.stageToAdd(s,givenTracked.get(s));
-                    continue;
+                    else{
+                        createNewVersion(givenTracked.get(s),s);
+                        sa.stageToAdd(s,givenTracked.get(s));
+                    }
                 }
-                if(!Objects.equals(splitTracked.get(s),givenTracked.get(s))){
-                    System.out.println("Encountered a merge conflict.");
-                    byte[] givenContent = readObject(join(blobs,givenTracked.get(s)),Blob.class).getContents();
-                    byte[] currentContent = readObject(join(blobs,currentTracked.get(s)),Blob.class).getContents();
-                    File now = join(CWD,s);
-                    now.createNewFile();
-                    writeContents(now,"<<<<<<< HEAD\n",currentContent,"\n=======\n",givenContent,">>>>>>>");
-                    Blob bb = new Blob(readContents(now));
-                    createBlob(bb);
-                    sa.stageToAdd(s,bb.getHash());
+                else{
+                   if (Objects.isNull(currentTracked.get(s))){
+                       restrictedDelete(join(CWD,s));
+                       sa.stageToRemove(s);
+                   }
+
+                   else if (!Objects.equals(splitTracked.get(s),(givenTracked.get(s))) ){
+                        message("Encountered a merge conflict.");
+                       byte[] givenContent = "".getBytes(StandardCharsets.UTF_8);
+                       byte[] currentContent = "".getBytes(StandardCharsets.UTF_8);
+
+                       if (Objects.nonNull(givenTracked.get(s))){
+                            givenContent = readObject(join(blobs,givenTracked.get(s)),Blob.class).getContents();
+                        }
+                        if (Objects.nonNull(currentTracked.get(s))){
+                            currentContent = readObject(join(blobs,currentTracked.get(s)),Blob.class).getContents();
+                        }
+
+
+                        File now = join(CWD,s);
+                        now.createNewFile();
+                        writeContents(now,"<<<<<<< HEAD\n",currentContent,"=======\n",givenContent,">>>>>>>\n");
+                        Blob bb = new Blob(readContents(now));
+                        createBlob(bb);
+                        sa.stageToAdd(s,bb.getHash());
+
+                   }
+                    else{
+                        createNewVersion(currentTracked.get(s),s);
+                        sa.stageToAdd(s,currentTracked.get(s));
+                    }
+
                 }
 
             }
         }
+        writeObject(stages,sa);
+        Commit newCommit = new Commit("Merged "+arg+" into "+currentBranch()+".",current.getHash());
 
-        Commit newCommit = new Commit("Merged "+arg+" into "+currentBranch(),current.getParent());
-        newCommit.setSecondParent(givenHash);
-        newCommit.setTracked(current.getTracked());
         stageToCommit(newCommit);
         submitCommit(newCommit, currentBranch());
         sa.clearStage();
         writeObject(stages,sa);
-        rmBranch(arg);
     }
 
 

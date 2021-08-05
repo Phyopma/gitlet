@@ -1,0 +1,8 @@
+I commit-2-files.inc
+> rm f.txt
+<<<
+> commit "Remove one file"
+<<<
+> find "Add another file"
+Found no commit with that message.
+<<<
