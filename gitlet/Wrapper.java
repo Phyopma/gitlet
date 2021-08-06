@@ -455,11 +455,21 @@ public class Wrapper {
         }
         String givenHash = readContentsAsString(join(refs,arg));
         Commit given = retrieveCommit(givenHash);
-        Commit split = retrieveCommit(given.getParent());
-        while (!split.isSplit()) {
-//            System.out.println(split.getParent());
-            split = retrieveCommit(split.getParent());
+        //here
+        Commit split = retrieveCommit(current.getHash());
+        //here
+        while (!(split.isSplit())) {
+            if (Objects.isNull(split.getSecondParent())){
+                split = retrieveCommit(split.getParent());
+            }
+            else{
+                split = retrieveCommit(split.getSecondParent());
+            }
+
         }
+
+
+
         if (split.getHash().equals(given.getHash())){
             System.out.println("Given branch is an ancestor of the current branch.");
             System.exit(0);
@@ -518,6 +528,9 @@ public class Wrapper {
                         sa.stageToAdd(s,bb.getHash());
 
                    }
+
+
+
                     else{
                         createNewVersion(currentTracked.get(s),s);
                         sa.stageToAdd(s,currentTracked.get(s));
@@ -525,11 +538,16 @@ public class Wrapper {
 
                 }
 
+            }else {
+                sa.stageToAdd(s,currentTracked.get(s));
             }
         }
         writeObject(stages,sa);
         Commit newCommit = new Commit("Merged "+arg+" into "+currentBranch()+".",current.getHash());
-
+        setHead(arg);
+        Commit targetCommit = retrieveCurrentCommit();
+        setHead(currentBranch());
+        newCommit.setSecondParent(targetCommit.getHash());
         stageToCommit(newCommit);
         submitCommit(newCommit, currentBranch());
         sa.clearStage();
