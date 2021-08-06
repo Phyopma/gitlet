@@ -457,14 +457,22 @@ public class Wrapper {
         Commit given = retrieveCommit(givenHash);
         //here
         Commit split = retrieveCommit(current.getHash());
-        //here
+
+
+        //here to correct
+        Queue<String> bfs = new LinkedList<>();
         while (!(split.isSplit())) {
-            if (Objects.isNull(split.getSecondParent())){
-                split = retrieveCommit(split.getParent());
+            bfs.add(split.getParent());
+            if (Objects.nonNull(split.getSecondParent())){
+                bfs.add(split.getSecondParent());
             }
-            else{
-                split = retrieveCommit(split.getSecondParent());
-            }
+            split = retrieveCommit(bfs.remove());
+//            if (Objects.isNull(split.getSecondParent())){
+//                split = retrieveCommit(split.getParent());
+//            }
+//            else{
+//                split = retrieveCommit(split.getSecondParent());
+//            }
 
         }
 
@@ -543,11 +551,15 @@ public class Wrapper {
             }
         }
         writeObject(stages,sa);
+        String currentBranch = currentBranch();
         Commit newCommit = new Commit("Merged "+arg+" into "+currentBranch()+".",current.getHash());
         setHead(arg);
         Commit targetCommit = retrieveCurrentCommit();
-        setHead(currentBranch());
+        setHead(currentBranch);
         newCommit.setSecondParent(targetCommit.getHash());
+        given.setSplit(true);
+        File f = join(commits,given.getHash());
+        writeObject(f,given);
         stageToCommit(newCommit);
         submitCommit(newCommit, currentBranch());
         sa.clearStage();

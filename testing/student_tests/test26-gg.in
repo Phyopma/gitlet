@@ -1,0 +1,42 @@
+I commit-2-files.inc
+> branch other
+<<<
++ h.txt wug2.txt
+> add h.txt
+<<<
+> rm g.txt
+<<<
+> commit "Added h.txt and removed g.txt"
+<<<
+> checkout other
+<<<
+> rm f.txt
+<<<
+> commit "Removed f.txt"
+<<<
+* f.txt
+E g.txt
+> checkout master
+<<<
+> merge other
+<<<
+* f.txt
+* g.txt
+E h.txt
+= h.txt wug2.txt
+> checkout other
+<<<
++ f.txt wug3.txt
+> add f.txt
+<<<
+> commit "Added f.txt back"
+<<<
+> checkout master
+<<<
+> merge other
+<<<
+* g.txt
+E h.txt
+= h.txt wug2.txt
+E f.txt
+= f.txt wug3.txt
