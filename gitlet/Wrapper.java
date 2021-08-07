@@ -374,6 +374,8 @@ public class Wrapper {
         newBranch.createNewFile();
         Commit current = retrieveCurrentCommit();
         current.setSplit(true);
+        current.getSplitName().add(currentBranch());
+        current.getSplitName().add(arg);
         File f = join(commits,current.getHash());
         writeObject(f,current);
         writeContents(newBranch,current.getHash());
@@ -456,12 +458,12 @@ public class Wrapper {
         String givenHash = readContentsAsString(join(refs,arg));
         Commit given = retrieveCommit(givenHash);
         //here
-        Commit split = retrieveCommit(current.getHash());
+        Commit split = retrieveCommit(given.getHash());
 
 
         //here to correct
         Queue<String> bfs = new LinkedList<>();
-        while (!(split.isSplit())) {
+        while (!(split.isSplit()  &&  split.getSplitName().contains(currentBranch()))) {
             bfs.add(split.getParent());
             if (Objects.nonNull(split.getSecondParent())){
                 bfs.add(split.getSecondParent());
@@ -558,6 +560,7 @@ public class Wrapper {
         setHead(currentBranch);
         newCommit.setSecondParent(targetCommit.getHash());
         given.setSplit(true);
+        given.getSplitName().add(currentBranch);
         File f = join(commits,given.getHash());
         writeObject(f,given);
         stageToCommit(newCommit);

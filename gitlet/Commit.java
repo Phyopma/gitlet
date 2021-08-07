@@ -40,7 +40,12 @@ public class Commit implements Serializable ,Dumpable{
     private String hash;
     private boolean split = false;
 
+    public Set<String> getSplitName() {
+        return splitName;
+    }
 
+    
+    private Set<String> splitName = new HashSet<>();
 
     public boolean isSplit() {
         return split;
@@ -49,6 +54,8 @@ public class Commit implements Serializable ,Dumpable{
     public void setSplit(boolean split) {
         this.split = split;
     }
+
+
 
 
 

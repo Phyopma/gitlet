@@ -1,0 +1,46 @@
+I commit-2-files.inc
+> branch other
+<<<
++ h.txt wug2.txt
+> add h.txt
+<<<
+> commit "Added h.txt"
+<<<
+> checkout other
+<<<
+> rm f.txt
+<<<
+> commit "Removed f.txt"
+<<<
+* f.txt
+E g.txt
+> branch godlyOther
+<<<
++ k.txt wug3.txt
+> add k.txt
+<<<
+> commit "Added k.txt"
+<<<
+> merge master
+<<<
+> status
+=== Branches ===
+godlyOther
+master
+\*other
+ 
+=== Staged Files ===
+ 
+=== Removed Files ===
+ 
+=== Modifications Not Staged For Commit ===
+ 
+=== Untracked Files ===
+ 
+<<<*
+* f.txt
+E g.txt
+E k.txt
+= k.txt wug3.txt
+E h.txt
+= h.txt wug2.txt
