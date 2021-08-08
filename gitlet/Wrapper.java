@@ -458,17 +458,22 @@ public class Wrapper {
         String givenHash = readContentsAsString(join(refs,arg));
         Commit given = retrieveCommit(givenHash);
         //here
-        Commit split = retrieveCommit(given.getHash());
+        Commit split = retrieveCommit(current.getHash());
 
 
         //here to correct
         Queue<String> bfs = new LinkedList<>();
-        while (!(split.isSplit()  &&  split.getSplitName().contains(currentBranch()))) {
+        while (!(split.isSplit()  &&  split.getSplitName().contains(arg) )) {
             bfs.add(split.getParent());
             if (Objects.nonNull(split.getSecondParent())){
                 bfs.add(split.getSecondParent());
             }
-            split = retrieveCommit(bfs.remove());
+            String tmp = bfs.remove();
+            if (tmp == null){
+                break;
+            }
+            split = retrieveCommit(tmp);
+
 //            if (Objects.isNull(split.getSecondParent())){
 //                split = retrieveCommit(split.getParent());
 //            }
@@ -512,12 +517,7 @@ public class Wrapper {
                     }
                 }
                 else{
-                   if (Objects.isNull(currentTracked.get(s))){
-                       restrictedDelete(join(CWD,s));
-                       sa.stageToRemove(s);
-                   }
-
-                   else if (!Objects.equals(splitTracked.get(s),(givenTracked.get(s))) ){
+                   if (!Objects.equals(splitTracked.get(s),(givenTracked.get(s))) ){
                         message("Encountered a merge conflict.");
                        byte[] givenContent = "".getBytes(StandardCharsets.UTF_8);
                        byte[] currentContent = "".getBytes(StandardCharsets.UTF_8);
@@ -538,9 +538,10 @@ public class Wrapper {
                         sa.stageToAdd(s,bb.getHash());
 
                    }
-
-
-
+                    else if (Objects.isNull(currentTracked.get(s))){
+                        restrictedDelete(join(CWD,s));
+                        sa.stageToRemove(s);
+                    }
                     else{
                         createNewVersion(currentTracked.get(s),s);
                         sa.stageToAdd(s,currentTracked.get(s));
@@ -561,6 +562,7 @@ public class Wrapper {
         newCommit.setSecondParent(targetCommit.getHash());
         given.setSplit(true);
         given.getSplitName().add(currentBranch);
+        given.getSplitName().add(arg);
         File f = join(commits,given.getHash());
         writeObject(f,given);
         stageToCommit(newCommit);

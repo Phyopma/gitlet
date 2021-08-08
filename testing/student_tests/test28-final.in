@@ -1,0 +1,23 @@
+I commit-2-files.inc
+> branch other
+<<<
+> branch nextOther
+<<<
+> rm f.txt
+<<<
+> commit "Removed f.txt"
+<<<
+> merge other
+Given branch is an ancestor of the current branch.
+<<<
+> checkout nextOther
+<<<
+> rm g.txt
+<<<
+> commit "Removed g.txt"
+<<<
+> checkout other
+<<<
+> merge nextOther
+Current branch fast-forwarded.
+<<<

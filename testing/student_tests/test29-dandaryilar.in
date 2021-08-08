@@ -1,0 +1,36 @@
+I commit-2-files.inc
+> branch other
+<<<
+> rm f.txt
+<<<
+> rm g.txt
+<<<
++ h.txt wug2.txt
+> add h.txt
+<<<
+> commit "Removed both files and added h.txt"
+<<<
+> branch danDarYiLar
+<<<
+> rm h.txt
+<<<
+> commit "Removed h.txt too :V"
+<<<
+> checkout other
+<<<
++ f.txt notwug.txt
+> add f.txt
+<<<
+> rm g.txt
+<<<
+> commit "Removed g.txt and fixed f.txt"
+<<<
+> checkout danDarYiLar
+<<<
+> merge other
+Encountered a merge conflict.
+<<<
+E h.txt
+E f.txt
+= h.txt wug2.txt
+= f.txt conflict3.txt
