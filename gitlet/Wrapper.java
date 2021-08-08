@@ -458,21 +458,62 @@ public class Wrapper {
         String givenHash = readContentsAsString(join(refs,arg));
         Commit given = retrieveCommit(givenHash);
         //here
-        Commit split = retrieveCommit(current.getHash());
+        Commit split = null;
+        Commit givenSplit = retrieveCommit(given.getHash());
+        Commit currentSplit = retrieveCommit(current.getHash());
 
 
         //here to correct
-        Queue<String> bfs = new LinkedList<>();
-        while (!(split.isSplit()  &&  split.getSplitName().contains(arg) )) {
-            bfs.add(split.getParent());
-            if (Objects.nonNull(split.getSecondParent())){
-                bfs.add(split.getSecondParent());
+
+        Queue<String> fromGiven = new ArrayDeque<>();
+        Queue<String> fromCurrent = new ArrayDeque<>();
+        Set<String> splitList = new HashSet<>();
+        while(Objects.nonNull(givenSplit.getParent())) {
+            fromGiven.add(givenSplit.getParent());
+            if (Objects.nonNull((givenSplit.getSecondParent()))) {
+                fromGiven.add(givenSplit.getSecondParent());
             }
-            String tmp = bfs.remove();
-            if (tmp == null){
+            if (givenSplit.isSplit()) {
+                splitList.add(givenSplit.getHash());
+            }
+            String tmp = fromGiven.remove();
+            givenSplit = retrieveCommit(tmp);
+
+
+        }
+        while(Objects.nonNull(currentSplit.getParent())) {
+            fromCurrent.add(currentSplit.getParent());
+            if (Objects.nonNull((currentSplit.getSecondParent()))) {
+                fromCurrent.add(currentSplit.getSecondParent());
+            }
+            if ( currentSplit.isSplit() && splitList.contains(currentSplit.getHash()) ) {
+                split = currentSplit;
                 break;
             }
-            split = retrieveCommit(tmp);
+            String tmp = fromCurrent.remove();
+            currentSplit = retrieveCommit(tmp);
+
+
+        }
+        if (split == null){
+            split = currentSplit;
+        }
+
+
+
+
+
+//        Queue<String> bfs = new LinkedList<>();
+//        while (!(split.isSplit()  &&  split.getSplitName().contains(arg) )) {
+//            bfs.add(split.getParent());
+//            if (Objects.nonNull(split.getSecondParent())){
+//                bfs.add(split.getSecondParent());
+//            }
+//            String tmp = bfs.remove();
+//            if (tmp == null){
+//                break;
+//            }
+//            split = retrieveCommit(tmp);
 
 //            if (Objects.isNull(split.getSecondParent())){
 //                split = retrieveCommit(split.getParent());
@@ -481,7 +522,7 @@ public class Wrapper {
 //                split = retrieveCommit(split.getSecondParent());
 //            }
 
-        }
+//        }
 
 
 
